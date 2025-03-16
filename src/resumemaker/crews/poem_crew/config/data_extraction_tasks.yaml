@@ -1,44 +1,71 @@
+extract_resume_data:
+  description: >
+    Extract key details from the resume file ({{ resume_file }}) using PDF parsing and text analysis to identify
+    the candidate's name, skills, experience, education, and other relevant information.
+  expected_output: >
+    A structured JSON object containing extracted resume details, including name, skills, job experience,
+    education, certifications, projects, and relevant keywords.
+
 extract_linkedin_data:
   description: >
-    Scrape the LinkedIn profile at {{ linkedin_url }} using BeautifulSoup and Scrapy to gather candidate skills, 
-    endorsements, job history, and other relevant professional details, ensuring all publicly available data is captured.
+    Scrape the LinkedIn profile at {{ linkedin_url }} to collect publicly available
+    professional information, including skills, endorsements, job history, education, and achievements.
+    Pay special attention to recommendations, activity, and specific terminology used in descriptions.
   expected_output: >
-    A structured JSON dataset containing LinkedIn profile information, including skills (e.g., listed skills, endorsements), 
-    experience (e.g., job titles, companies, durations),education (e.g., degrees, institutions) and add all things which help to build the resume.
-  
+    A structured JSON dataset containing LinkedIn profile details, such as listed skills (with endorsements),
+    work experience (titles, companies, durations), education (degrees, institutions), certifications,
+    achievements, and activity patterns.
 
 extract_github_data:
   description: >
-    Fetch data from the GitHub profile at {{ github_url }} using the GitHub API via requests and Scrapy to collect 
-    repositories, contributions, programming languages used, and project descriptions to assess technical skills.
+    Fetch data from the GitHub profile at {{ github_url }} to extract repositories,
+    contributions, programming languages, and relevant project descriptions. Identify the profile's
+    overall focus and areas of expertise.
   expected_output: >
-    A structured JSON summary of GitHub activities, including active repositories (e.g., names, descriptions), 
-    technologies used (e.g., languages, frameworks), and code contributions (e.g., commits, pull requests).
-  
+    A structured JSON summary of GitHub profile data, including repositories (names, descriptions, stars),
+    public contributions summary, primary programming languages, and notable projects.
+
+analyze_github_repositories:
+  description: >
+    Perform deep analysis of all repositories found in the GitHub profile of {{ candidate_name }}
+    at {{ github_url }}. For each repository, analyze code quality, project structure, 
+    documentation, technology stack, and implementation patterns. Identify domain expertise
+    and programming paradigms the candidate demonstrates.
+  expected_output: >
+    A comprehensive JSON report detailing each repository's purpose, technologies used, 
+    code quality assessment, notable implementation patterns, and the candidate's contributions.
+    Include an overall assessment of the candidate's GitHub presence and technical proficiency.
 
 analyze_job_posting:
   description: >
-    Analyze the job description provided at {{ job_posting }} (URL or raw text) using BeautifulSoup for web scraping 
-    and pdfplumber for PDFs to extract key requirements, skills, experience levels, and industry-relevant keywords.
+    Process the job description provided at {{ job_posting }} to extract key requirements, 
+    skills, experience levels, and industry-specific keywords. Identify both explicit and
+    implicit requirements, distinguish between essential and preferred qualifications, and
+    extract information about the company culture and work environment.
   expected_output: >
-    A structured JSON breakdown of the job posting, highlighting required skills (e.g., technical, soft), experience 
-    levels (e.g., years required), and essential keywords (e.g., industry jargon, tools).
-  
+    A structured JSON breakdown of the job posting, detailing required skills (technical and soft),
+    experience levels, industry keywords, important qualifications, company culture indicators,
+    and role expectations.
 
 compare_resume_with_job:
   description: >
-    Match the extracted resume data ({{ resume_data }}) with the job requirements ({{ job_requirements }}) using text 
-    analysis to assess alignment, identify gaps, and suggest improvements for better job fit.
+    Compare the extracted resume details with job requirements using
+    text analysis to evaluate alignment, detect skill gaps, and provide improvement suggestions.
+    Calculate a quantitative match score based on required skills, experience, and qualifications.
+    Identify strengths to emphasize and weaknesses to address.
   expected_output: >
-    A structured JSON comparison report detailing how well the resume aligns with the job requirements (e.g., matching 
-    skills, experience overlap) and suggesting areas for improvement (e.g., missing skills, keywords).
-  
+    A structured JSON comparison report showing how well the resume matches the job posting, highlighting
+    overlapping skills, missing competencies, recommendations for better alignment, and a detailed
+    rating score (0-100%) with breakdown by category (skills, experience, education, etc.).
 
 structure_candidate_profile:
   description: >
-    Organize the extracted data from resumes ({{ resume_data }}), LinkedIn ({{ linkedin_data }}), and GitHub 
-    ({{ github_data }}) into a cohesive, structured candidate profile using Pandas, highlighting strengths and job relevance.dditionally, save the structured profile into a Retrieval-Augmented Generation (RAG) database for future queries.
+    Organize extracted data from the resume, LinkedIn, and GitHub
+    into a comprehensive candidate profile. Reconcile any discrepancies between sources,
+    create a cohesive narrative of the candidate's professional journey, and highlight
+    key strengths relevant to the target job. Provide an overall assessment of job fit.
   expected_output: >
-    A well-structured JSON candidate profile combining resume, LinkedIn, and GitHub data, ready for optimization or storage 
-    in a database, including sections like experience, education, skills, projects and more all the relevent things.
-  
+    A well-structured JSON candidate profile integrating resume, LinkedIn, and GitHub insights,
+    organized into experience, education, skills, projects, certifications, and key achievements.
+    Include a job relevance section for ATS optimization, gap analysis, and recommendations
+    for profile improvement.

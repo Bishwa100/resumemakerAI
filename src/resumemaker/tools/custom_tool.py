@@ -15,6 +15,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
+from langchain.document_loaders import PyPDFLoader
 
 load_dotenv()
 
@@ -162,4 +163,20 @@ class MistralRAGTool(BaseTool):
 
         except Exception as e:
             return {"error": f"Unexpected error: {str(e)}"}
+        
+
+class PDFAnalyzerTool(BaseTool):
+    name: str = "pdf_analyzer" 
+    description: str = "Extracts and processes text from scientific PDF papers."  
+
+    def _run(self, pdf_path: str) -> str:
+        try:
+            loader = PyPDFLoader(pdf_path)
+            documents = loader.load()
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+            docs = text_splitter.split_documents(documents)
+            return "\n\n".join([doc.page_content for doc in docs])
+        except Exception as e:
+            return f"Error processing PDF: {str(e)}"
+
 

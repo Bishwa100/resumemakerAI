@@ -1,21 +1,11 @@
-extract_resume_data:
-  description: >
-    Extract text from the uploaded resume file at {{ resume_file }} (PDF or DOCX format) using PyPDF2 for text-based files 
-    and pytesseract for image-based files, then structure the extracted data into relevant sections such as experience, 
-    education, and skills.
-  expected_output: >
-    A structured JSON representation of resume data, including job history (e.g., title, company, dates), education 
-    (e.g., degree, institution), and skills (e.g., technical, soft skills).
-  agent: data_extraction_agent
-
 extract_linkedin_data:
   description: >
     Scrape the LinkedIn profile at {{ linkedin_url }} using BeautifulSoup and Scrapy to gather candidate skills, 
     endorsements, job history, and other relevant professional details, ensuring all publicly available data is captured.
   expected_output: >
     A structured JSON dataset containing LinkedIn profile information, including skills (e.g., listed skills, endorsements), 
-    experience (e.g., job titles, companies, durations), and education (e.g., degrees, institutions).
-  agent: data_extraction_agent
+    experience (e.g., job titles, companies, durations),education (e.g., degrees, institutions) and add all things which help to build the resume.
+  
 
 extract_github_data:
   description: >
@@ -24,7 +14,7 @@ extract_github_data:
   expected_output: >
     A structured JSON summary of GitHub activities, including active repositories (e.g., names, descriptions), 
     technologies used (e.g., languages, frameworks), and code contributions (e.g., commits, pull requests).
-  agent: data_extraction_agent
+  
 
 analyze_job_posting:
   description: >
@@ -33,7 +23,7 @@ analyze_job_posting:
   expected_output: >
     A structured JSON breakdown of the job posting, highlighting required skills (e.g., technical, soft), experience 
     levels (e.g., years required), and essential keywords (e.g., industry jargon, tools).
-  agent: job_analysis_agent
+  
 
 compare_resume_with_job:
   description: >
@@ -42,13 +32,13 @@ compare_resume_with_job:
   expected_output: >
     A structured JSON comparison report detailing how well the resume aligns with the job requirements (e.g., matching 
     skills, experience overlap) and suggesting areas for improvement (e.g., missing skills, keywords).
-  agent: job_analysis_agent
+  
 
 structure_candidate_profile:
   description: >
     Organize the extracted data from resumes ({{ resume_data }}), LinkedIn ({{ linkedin_data }}), and GitHub 
-    ({{ github_data }}) into a cohesive, structured candidate profile using Pandas, highlighting strengths and job relevance.
+    ({{ github_data }}) into a cohesive, structured candidate profile using Pandas, highlighting strengths and job relevance.dditionally, save the structured profile into a Retrieval-Augmented Generation (RAG) database for future queries.
   expected_output: >
     A well-structured JSON candidate profile combining resume, LinkedIn, and GitHub data, ready for optimization or storage 
-    in a database, including sections like experience, education, skills, and projects.
-  agent: profile_structuring_agent
+    in a database, including sections like experience, education, skills, projects and more all the relevent things.
+  

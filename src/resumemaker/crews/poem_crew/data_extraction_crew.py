@@ -31,10 +31,18 @@ load_dotenv()
 #     base_url="http://localhost:11435"
 # )
 
-llm = LLM(
+class CustomLLM(LLM):
+    def call(self, messages, **kwargs):
+        # Ensure the last message is a user role
+        if messages and messages[-1]["role"] == "assistant":
+            messages.append({"role": "user", "content": "Please proceed with the analysis."})
+        return super().call(messages, **kwargs)
+
+llm = CustomLLM(
     model="mistral/mistral-large-latest",
     temperature=0.7,
-    api_key= os.getenv('MISTRAL_API_KEY')
+    api_key= os.getenv('MISTRAL_API_KEY'),
+    
 )
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -58,18 +66,28 @@ class DataExtraction:
         with open(file_path, 'r') as file:
             configs[key] = yaml.safe_load(file)
     
+    # @agent
+    # def data_extraction_agent(self) -> Agent:
+    #     return Agent(
+    #         config=self.configs["agents"]["data_extraction_agent"],
+    #         llm=llm,
+    #         verbose=True
+    #     )
     @agent
     def data_extraction_agent(self) -> Agent:
         return Agent(
+            role="CrewAI Data Extraction Specialist",  # Explicit role assignment
             config=self.configs["agents"]["data_extraction_agent"],
             llm=llm,
             verbose=True
         )
+
     
     @agent
     def github_extraction_agent(self) -> Agent:
         """Dedicated agent for GitHub repository analysis"""
         return Agent(
+            
             config=self.configs["agents"]["github_extraction_agent"],
             llm=llm,
             verbose=True
@@ -111,7 +129,7 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["extract_github_data"],
             agent=self.github_extraction_agent(),
-            tools=[GitHubFetchTool(), GoogleSearchTool(), ScrapeWebsiteTool()]
+            tools=[GitHubFetchTool()]
         )
 
     @task
@@ -128,7 +146,7 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["analyze_job_posting"],
             agent=self.job_analysis_agent(),
-            tools=[MistralRAGTool()]
+            # tools=[MistralRAGTool()]
         )
 
     @task
@@ -136,7 +154,7 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["compare_resume_with_job"],
             agent=self.job_analysis_agent(),
-            tools=[MistralRAGTool()],
+            # tools=[MistralRAGTool()],
             context=[self.extract_resume_data(), self.analyze_job_posting()]
         )
 
@@ -145,7 +163,7 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["structure_candidate_profile"],
             agent=self.profile_structuring_agent(),
-            tools=[MistralRAGTool()],
+            # tools=[MistralRAGTool()],
             context=[
                 self.extract_resume_data(),
                 self.extract_linkedin_data(),
@@ -161,18 +179,18 @@ class DataExtraction:
         return Crew(
             agents=[
                 self.data_extraction_agent(),
-                # self.github_extraction_agent(),
-                # self.job_analysis_agent(),
-                # self.profile_structuring_agent()
+                self.github_extraction_agent(),
+                self.job_analysis_agent(),
+                self.profile_structuring_agent()
             ],
             tasks=[
                 self.extract_resume_data(),
-                # self.extract_linkedin_data(),
-                # self.extract_github_profile(),
-                # self.analyze_github_repositories(),
-                # self.analyze_job_posting(),
-                # self.compare_resume_with_job(),
-                # self.structure_candidate_profile()
+                self.extract_linkedin_data(),
+                self.extract_github_profile(),
+                self.analyze_github_repositories(),
+                self.analyze_job_posting(),
+                self.compare_resume_with_job(),
+                self.structure_candidate_profile()
             ],
             process=Process.sequential,
             verbose=True
@@ -205,10 +223,10 @@ if __name__ == "__main__":
         # Run the extraction crew
         candidate_profile = extraction_crew.kickoff(
             inputs={
-                "resume_details": read_resume
-                # "linkedin_url": linkedin_url,
-                # "github_url": github_url,
-                # "job_posting": read_jobPosting
+                "resume_details": read_resume,
+                "linkedin_url": linkedin_url,
+                "github_url": github_url,
+                "job_posting": read_jobPosting
             }
         )
         

@@ -163,15 +163,16 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["structure_candidate_profile"],
             agent=self.profile_structuring_agent(),
-            # tools=[MistralRAGTool()],
+            tools=[MistralRAGTool()],
             context=[
                 self.extract_resume_data(),
                 self.extract_linkedin_data(),
+                self.extract_github_profile(),
                 self.analyze_github_repositories(),
                 self.analyze_job_posting(),
                 self.compare_resume_with_job()
             ],
-            output_pydantic=CandidateProfile
+            output_json= CandidateProfile
         )
 
     @crew

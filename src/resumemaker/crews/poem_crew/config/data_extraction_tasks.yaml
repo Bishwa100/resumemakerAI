@@ -37,7 +37,9 @@ compare_resume_with_job:
 
 structure_candidate_profile:
   description: >
-    Organize extracted data from resume, LinkedIn, and GitHub into a comprehensive candidate profile. Reconcile discrepancies between sources (e.g., differing job titles), create a cohesive narrative, and highlight key strengths relevant to {job_posting}. Include job fit assessment and optimization recommendations.
+    Organize extracted data from resume, LinkedIn, and GitHub into a comprehensive candidate profile.
   expected_output: >
     A structured JSON profile, e.g., {"name": "John Doe", "skills": ["Python", "PHP"], "experience": [{"title": "Developer", "company": "ABC", "duration": "2019-2021"}], "education": ["BS CS"], "projects": [{"name": "Repo1", "tech": ["Python"]}], "job_fit": {"score": 85, "gaps": ["SQL"], "recommendations": ["Add SQL"]}}, and save the final ans in json.
-  
+
+
+# Reconcile discrepancies between sources (e.g., differing job titles), create a cohesive narrative, and highlight key strengths relevant to {job_posting}. Include job fit assessment and optimization recommendations.

@@ -1,0 +1,23 @@
+analyze_candidate_profile:
+  description: "Analyze the candidate profile JSON to understand the candidate's skills, experience, education, and career goals"
+  expected_output: "A comprehensive analysis of the candidate's profile highlighting key strengths, unique selling points, and potential areas to emphasize in the resume"
+
+identify_keywords_for_ats:
+  description: "Extract and optimize keywords from the candidate profile and job posting that will maximize ATS scoring"
+  expected_output: "A prioritized list of keywords and phrases to be integrated into the resume, categorized by sections (skills, experience, education, etc.)"
+
+craft_resume_sections:
+  description: "Create optimized content for each resume section (summary, skills, experience, education, etc.)"
+  expected_output: "Complete, ATS-optimized content for all resume sections, formatted with appropriate headers and bullet points"
+
+process_profile_image:
+  description: "Process the user-provided profile image to ensure it's appropriate for resume integration"
+  expected_output: "An optimized image file with appropriate dimensions, resolution, and formatting for resume integration, or recommendations if the image is not suitable"
+
+design_resume_layout:
+  description: "Create a visual design and layout specification for the resume that balances ATS compatibility with visual appeal"
+  expected_output: "A detailed layout specification including typography choices, spacing, margins, section ordering, and visual element placement"
+
+generate_final_resume:
+  description: "Generate the final PDF resume with integrated content, design, and image"
+  expected_output: "A complete, ATS-friendly PDF resume file with professional design and appropriate image integration"

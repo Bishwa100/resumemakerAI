@@ -1,56 +1,85 @@
-# {{crew_name}} Crew
+# ATS-Friendly Resume Maker
 
-Welcome to the {{crew_name}} Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+This tool helps create beautiful and ATS-friendly resumes tailored to specific job descriptions.
 
-## Installation
+## Setup
 
-Ensure you have Python >=3.10 <3.13 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+### Option 1: Local Installation
 
-First, if you haven't already, install uv:
-
+1. Install dependencies:
 ```bash
-pip install uv
+pip install -r requirements.txt
 ```
 
-Next, navigate to your project directory and install the dependencies:
-
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
+2. Set up environment variables:
+Create a `.env` file in the root directory with:
+```
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
-### Customizing
+### Option 2: Using Docker (Recommended)
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+1. Install [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/)
 
-- Modify `src/resumemaker/config/agents.yaml` to define your agents
-- Modify `src/resumemaker/config/tasks.yaml` to define your tasks
-- Modify `src/resumemaker/crew.py` to add your own logic, tools and specific args
-- Modify `src/resumemaker/main.py` to add custom inputs for your agents and tasks
+2. Set up environment variables:
+   - Copy `env.example` to `.env` and fill in your API keys
+   ```bash
+   cp env.example .env
+   # Edit .env with your favorite editor
+   ```
 
-## Running the Project
+3. Use the provided Makefile commands:
+   ```bash
+   # Build and run
+   make
 
-To kickstart your flow and begin execution, run this from the root folder of your project:
+   # Only build the Docker image
+   make build
 
-```bash
-crewai run
-```
+   # Run in detached mode
+   make run-detached
 
-This command initializes the resumemaker Flow as defined in your configuration.
+   # View logs
+   make logs
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+   # Stop containers
+   make stop
 
-## Understanding Your Crew
+   # Clean up everything
+   make clean
+   ```
 
-The resumemaker Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+## Usage
 
-## Support
+1. Fill in your details in `crews/poem_crew/candidate_profile.json`
+2. Add the job description in `crews/poem_crew/job_description.json`
+3. (Optional) Add your professional photo as `crews/poem_crew/profile_photo.jpg`
+4. Run the resume maker:
 
-For support, questions, or feedback regarding the {{crew_name}} Crew or crewAI.
+   Local:
+   ```bash
+   python -m resumemaker.crews.poem_crew.resume_making_crew
+   ```
+   
+   Docker:
+   ```bash
+   docker-compose run resumemaker
+   # Or with Makefile
+   make run
+   ```
 
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+## Output
 
-Let's create wonders together with the power and simplicity of crewAI.
+The tool will generate output files in the `output` directory:
+- An ATS-optimized LaTeX resume
+- A compiled PDF version of your resume
+- Keyword analysis and optimization suggestions
+
+## Features
+
+- ATS optimization
+- Keyword analysis
+- Professional LaTeX formatting
+- Profile photo integration (optional)
+- Modern and clean design
+- Multiple resume sections support

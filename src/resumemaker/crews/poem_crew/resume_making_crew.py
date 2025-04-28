@@ -9,10 +9,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import ScrapeWebsiteTool
 from resumemaker.tools.custom_tool import MistralRAGTool
-from resumemaker.tools.pdfGenarator_tool import PDFGeneratorTool
 from resumemaker.tools.image_processing_tool import ImageProcessingTool
+from resumemaker.tools.latex_generator_tool import LaTeXGeneratorTool
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -22,91 +21,73 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 # Configure LLM
-class CustomLLM(LLM):
-    def call(self, messages, **kwargs):
-        # Ensure the last message is a user role if needed
-        if messages and messages[-1]["role"] == "assistant":
-            messages.append({"role": "user", "content": "Please continue with the resume creation."})
-        return super().call(messages, **kwargs)
+# class CustomLLM(LLM):
+#     def call(self, messages, **kwargs):
+#         if messages and messages[-1]["role"] == "assistant":
+#             messages.append({"role": "user", "content": "Please continue with the resume creation."})
+#         return super().call(messages, **kwargs)
 
-llm = CustomLLM(
-    model="mistral/mistral-large-latest",
-    temperature=0.5,  # Lower temperature for more precise outputs
-    api_key=os.getenv('MISTRAL_API_KEY'),
+# llm = CustomLLM(
+#     model="mistral/mistral-large-latest",
+#     temperature=0.3,
+#     api_key=os.getenv('MISTRAL_API_KEY'),
+# )
+
+
+llm = LLM(
+    model="gemini/gemini-1.5-pro-latest",
+    temperature=0.7,
+    api_key= os.getenv('GEMINI_API_KEY')
 )
 
 BASE_DIR = Path(__file__).resolve().parent
 
 @CrewBase
-class ResumeCreation:
-    """ATS-Friendly Resume Creation Crew with design capabilities"""
+class LaTeXResumeCreation:
+    """High ATS-Friendly LaTeX Resume Creation Crew"""
     
     config_files = {
         'agents': BASE_DIR / "config" / "resume_creation_agents.yaml",
         'tasks': BASE_DIR / "config" / "resume_creation_tasks.yaml"
     }
     
-    # Load configurations
     configs = {}
     for key, file_path in config_files.items():
         file_path = file_path.resolve()
         if not file_path.exists():
+            logger.warning(f"Config file not found at {file_path}. Ensure the file exists.")
             raise FileNotFoundError(f"Configuration file not found: {file_path}")
-        
         with open(file_path, 'r') as file:
             configs[key] = yaml.safe_load(file)
     
+    # Define Agents
     @agent
     def ats_optimization_agent(self) -> Agent:
-        """Agent responsible for making resume content ATS-friendly"""
-        return Agent(
-            role="ATS Optimization Specialist",
-            config=self.configs["agents"]["ats_optimization_agent"],
-            llm=llm,
-            verbose=True
-        )
+        return Agent(config=self.configs["agents"]["ats_optimization_agent"], llm=llm, verbose=True)
     
     @agent
     def resume_content_agent(self) -> Agent:
-        """Agent responsible for crafting compelling resume content"""
-        return Agent(
-            role="Resume Content Specialist",
-            config=self.configs["agents"]["resume_content_agent"],
-            llm=llm,
-            verbose=True
-        )
+        return Agent(config=self.configs["agents"]["resume_content_agent"], llm=llm, verbose=True)
     
     @agent
-    def resume_design_agent(self) -> Agent:
-        """Agent responsible for visual design and layout of the resume"""
-        return Agent(
-            role="Resume Design Specialist",
-            config=self.configs["agents"]["resume_design_agent"],
-            llm=llm,
-            verbose=True
-        )
+    def latex_resume_agent(self) -> Agent:
+        return Agent(config=self.configs["agents"]["latex_resume_agent"], llm=llm, verbose=True)
     
     @agent
-    def image_integration_agent(self) -> Agent:
-        """Agent responsible for handling and integrating images into the resume"""
-        return Agent(
-            role="Resume Image Integration Specialist",
-            config=self.configs["agents"]["image_integration_agent"],
-            llm=llm,
-            verbose=True
-        )
+    def image_processing_agent(self) -> Agent:
+        return Agent(config=self.configs["agents"]["image_processing_agent"], llm=llm, verbose=True)
+
+    @agent
+    def resume_compilation_agent(self) -> Agent:
+        return Agent(config=self.configs["agents"]["resume_compilation_agent"], llm=llm, verbose=True)
     
+    # Define Tasks
     @task
     def analyze_candidate_profile(self) -> Task:
-        """Analyzes the candidate profile JSON from data extraction crew"""
-        return Task(
-            config=self.configs["tasks"]["analyze_candidate_profile"],
-            agent=self.resume_content_agent(),
-        )
+        return Task(config=self.configs["tasks"]["analyze_candidate_profile"], agent=self.resume_content_agent())
     
     @task
     def identify_keywords_for_ats(self) -> Task:
-        """Extracts and optimizes keywords for ATS systems"""
         return Task(
             config=self.configs["tasks"]["identify_keywords_for_ats"],
             agent=self.ats_optimization_agent(),
@@ -116,7 +97,6 @@ class ResumeCreation:
     
     @task
     def craft_resume_sections(self) -> Task:
-        """Creates optimized content for each resume section"""
         return Task(
             config=self.configs["tasks"]["craft_resume_sections"],
             agent=self.resume_content_agent(),
@@ -125,35 +105,37 @@ class ResumeCreation:
     
     @task
     def process_profile_image(self) -> Task:
-        """Processes the user-provided profile image for resume integration"""
         return Task(
             config=self.configs["tasks"]["process_profile_image"],
-            agent=self.image_integration_agent(),
+            agent=self.image_processing_agent(),
             tools=[ImageProcessingTool()]
         )
     
     @task
-    def design_resume_layout(self) -> Task:
-        """Creates the visual design and layout for the resume"""
+    def create_latex_template(self) -> Task:
         return Task(
-            config=self.configs["tasks"]["design_resume_layout"],
-            agent=self.resume_design_agent(),
+            config=self.configs["tasks"]["create_latex_template"],
+            agent=self.latex_resume_agent(),
             tools=[MistralRAGTool()],
-            context=[self.craft_resume_sections(), self.process_profile_image()]
+            context=[self.craft_resume_sections()]
         )
     
     @task
-    def generate_final_resume(self) -> Task:
-        """Generates the final ATS-friendly resume with integrated design and image"""
+    def generate_latex_resume(self) -> Task:
         return Task(
-            config=self.configs["tasks"]["generate_final_resume"],
-            agent=self.resume_design_agent(),
-            tools=[PDFGeneratorTool()],
-            context=[
-                self.craft_resume_sections(),
-                self.process_profile_image(),
-                self.design_resume_layout()
-            ]
+            config=self.configs["tasks"]["generate_latex_resume"],
+            agent=self.latex_resume_agent(),
+            tools=[LaTeXGeneratorTool()],
+            context=[self.craft_resume_sections(), self.process_profile_image(), self.create_latex_template()]
+        )
+    
+    @task
+    def compile_final_resume(self) -> Task:
+        return Task(
+            config=self.configs["tasks"]["compile_final_resume"],
+            agent=self.resume_compilation_agent(),
+            tools=[LaTeXGeneratorTool()],
+            context=[self.generate_latex_resume()]
         )
     
     @crew
@@ -162,16 +144,18 @@ class ResumeCreation:
             agents=[
                 self.ats_optimization_agent(),
                 self.resume_content_agent(),
-                self.resume_design_agent(),
-                self.image_integration_agent()
+                self.latex_resume_agent(),
+                self.image_processing_agent(),
+                self.resume_compilation_agent()
             ],
             tasks=[
                 self.analyze_candidate_profile(),
                 self.identify_keywords_for_ats(),
                 self.craft_resume_sections(),
                 self.process_profile_image(),
-                self.design_resume_layout(),
-                self.generate_final_resume()
+                self.create_latex_template(),
+                self.generate_latex_resume(),
+                self.compile_final_resume()
             ],
             process=Process.sequential,
             verbose=True
@@ -179,39 +163,42 @@ class ResumeCreation:
 
 if __name__ == "__main__":
     try:
-        # Load candidate profile from data extraction crew output
+        # Load Candidate Profile
         profile_path = BASE_DIR / "candidate_profile.json"
-        
         if not profile_path.exists():
             raise FileNotFoundError(f"Error: Candidate profile file '{profile_path}' not found.")
         
         with open(profile_path, 'r') as f:
-            candidate_profile = json.load(f)
+            candidate_profile = json.load(f)["json_dict"]  # Use the 'json_dict' section
         
-        # Get user's profile image path
+        # Load Profile Image
         profile_image_path = BASE_DIR / "bishwanath.jpg"
-        
         if not profile_image_path.exists():
             logger.warning(f"Profile image not found at '{profile_image_path}'. Resume will be created without an image.")
             profile_image = None
         else:
             profile_image = profile_image_path
         
-        # Create and run the resume creation crew
-        resume_crew = ResumeCreation().crew()
-        
+        # Initialize Crew and Start Processing
+        resume_crew = LaTeXResumeCreation().crew()
         final_resume = resume_crew.kickoff(
             inputs={
                 "candidate_profile": candidate_profile,
-                "profile_image": str(profile_image_path),
-                "ats_optimization_level": "high",  # Options: low, medium, high
-                "design_style": "professional"  # Options: minimal, professional, creative
+                "profile_image": str(profile_image_path) if profile_image else None,
+                "ats_optimization_level": "high",
+                "resume_style": "professional",
+                "latex_class": "moderncv",
+                "latex_color_theme": "black"
             }
         )
         
-        logger.info("Resume creation completed successfully!")
-        logger.info(f"Final resume saved to: {final_resume}")
+        logger.info("✅ High ATS-friendly LaTeX resume creation completed successfully!")
+        logger.info(f"📄 Final resume PDF saved to: {final_resume}")
         
+    except FileNotFoundError as fe:
+        logger.error(f"❌ FileNotFoundError: {str(fe)}")
+    except json.JSONDecodeError:
+        logger.error("❌ JSONDecodeError: Failed to parse 'candidate_profile.json'. Ensure it's properly formatted.")
     except Exception as e:
-        logger.error(f"Error during resume creation: {str(e)}")
+        logger.error(f"❌ Error during LaTeX resume creation: {str(e)}")
         raise

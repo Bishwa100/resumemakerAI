@@ -1,23 +1,27 @@
 analyze_candidate_profile:
-  description: "Analyze the candidate profile JSON to understand the candidate's skills, experience, education, and career goals"
-  expected_output: "A comprehensive analysis of the candidate's profile highlighting key strengths, unique selling points, and potential areas to emphasize in the resume"
+  description: "Analyze the candidate profile JSON to extract skills, experience, education, projects, and certifications, focusing on alignment with the 'AI & Machine Learning Specialist' job posting."
+  expected_output: "A detailed analysis of Bishwanath Jana's profile, emphasizing ATS-relevant strengths and keywords like Python, TensorFlow, and NLP."
 
 identify_keywords_for_ats:
-  description: "Extract and optimize keywords from the candidate profile and job posting that will maximize ATS scoring"
-  expected_output: "A prioritized list of keywords and phrases to be integrated into the resume, categorized by sections (skills, experience, education, etc.)"
+  description: "Extract and prioritize ATS keywords from the job posting (e.g., Python, TensorFlow, NLP) and candidate profile, ensuring high optimization for Tech Innovators' requirements."
+  expected_output: "A prioritized list of ATS-friendly keywords including Python, TensorFlow, PyTorch, Scikit-learn, SQL, Docker, NLP, and Computer Vision."
 
 craft_resume_sections:
-  description: "Create optimized content for each resume section (summary, skills, experience, education, etc.)"
-  expected_output: "Complete, ATS-optimized content for all resume sections, formatted with appropriate headers and bullet points"
+  description: "Craft concise, keyword-rich resume sections (Summary, Skills, Experience, Education, Projects, Certifications) optimized for ATS compatibility with the AI & ML Specialist role."
+  expected_output: "ATS-optimized content for all resume sections, integrating matching skills and experience from the candidate profile."
 
 process_profile_image:
-  description: "Process the user-provided profile image to ensure it's appropriate for resume integration"
-  expected_output: "An optimized image file with appropriate dimensions, resolution, and formatting for resume integration, or recommendations if the image is not suitable"
+  description: "Process the profile image (bishwanath.jpg), ensuring it’s ATS-compatible or excluded if not needed."
+  expected_output: "An optimized image file or recommendation to exclude it for ATS compatibility."
 
-design_resume_layout:
-  description: "Create a visual design and layout specification for the resume that balances ATS compatibility with visual appeal"
-  expected_output: "A detailed layout specification including typography choices, spacing, margins, section ordering, and visual element placement"
+create_latex_template:
+  description: "Create a simple, ATS-friendly LaTeX template tailored to include Summary, Skills, Experience, Education, Projects, and Certifications."
+  expected_output: "A clean, ATS-compatible LaTeX template (.tex) file with a straightforward structure."
 
-generate_final_resume:
-  description: "Generate the final PDF resume with integrated content, design, and image"
-  expected_output: "A complete, ATS-friendly PDF resume file with professional design and appropriate image integration"
+generate_latex_resume:
+  description: "Generate a LaTeX resume using the candidate profile data, optimized for ATS and tailored to the AI & ML Specialist role."
+  expected_output: "A complete, ATS-friendly LaTeX document (.tex) ready for compilation."
+
+compile_final_resume:
+  description: "Compile the LaTeX resume into a high ATS-friendly PDF for submission to Tech Innovators."
+  expected_output: "A professional, ATS-optimized PDF resume file."

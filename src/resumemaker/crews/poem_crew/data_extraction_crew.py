@@ -31,19 +31,26 @@ load_dotenv()
 #     base_url="http://localhost:11435"
 # )
 
-class CustomLLM(LLM):
-    def call(self, messages, **kwargs):
-        # Ensure the last message is a user role
-        if messages and messages[-1]["role"] == "assistant":
-            messages.append({"role": "user", "content": "Please proceed with the analysis."})
-        return super().call(messages, **kwargs)
+# class CustomLLM(LLM):
+#     def call(self, messages, **kwargs):
+#         # Ensure the last message is a user role
+#         if messages and messages[-1]["role"] == "assistant":
+#             messages.append({"role": "user", "content": "Please proceed with the analysis."})
+#         return super().call(messages, **kwargs)
 
-llm = CustomLLM(
-    model="mistral/mistral-large-latest",
-    temperature=0.7,
-    api_key= os.getenv('MISTRAL_API_KEY'),
+# llm = CustomLLM(
+#     model="mistral/mistral-large-latest",
+#     temperature=0.7,
+#     api_key= os.getenv('MISTRAL_API_KEY'),
     
+# )
+
+llm = LLM(
+    model="gemini/gemini-1.5-pro-latest",
+    temperature=0.7,
+    api_key= os.getenv('GEMINI_API_KEY')
 )
+
 
 BASE_DIR = Path(__file__).resolve().parent
 

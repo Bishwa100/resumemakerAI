@@ -1,0 +1,16 @@
+{
+    "job_details": {
+        "title": "",
+        "company": "",
+        "location": "",
+        "employment_type": "",
+        "description": "",
+        "requirements": {
+            "required_skills": [],
+            "preferred_skills": [],
+            "education": "",
+            "experience": ""
+        },
+        "responsibilities": []
+    }
+} 

@@ -9,7 +9,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
-from resumemaker.tools.custom_tool import MistralRAGTool
+from resumemaker.tools.opensource_rag_tool import OpenSourceRAGTool
 from resumemaker.tools.image_processing_tool import ImageProcessingTool
 from resumemaker.tools.latex_generator_tool import LaTeXGeneratorTool
 
@@ -40,7 +40,11 @@ llm = LLM(
     api_key= os.getenv('GEMINI_API_KEY')
 )
 
+# Set up paths
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]  # 4 levels up from this file
+INPUT_DIR = PROJECT_ROOT / "input"
+OUTPUT_DIR = PROJECT_ROOT / "output"
 
 @CrewBase
 class LaTeXResumeCreation:
@@ -91,7 +95,7 @@ class LaTeXResumeCreation:
         return Task(
             config=self.configs["tasks"]["identify_keywords_for_ats"],
             agent=self.ats_optimization_agent(),
-            tools=[MistralRAGTool()],
+            tools=[OpenSourceRAGTool()],
             context=[self.analyze_candidate_profile()]
         )
     
@@ -116,7 +120,7 @@ class LaTeXResumeCreation:
         return Task(
             config=self.configs["tasks"]["create_latex_template"],
             agent=self.latex_resume_agent(),
-            tools=[MistralRAGTool()],
+            tools=[OpenSourceRAGTool()],
             context=[self.craft_resume_sections()]
         )
     
@@ -163,8 +167,11 @@ class LaTeXResumeCreation:
 
 if __name__ == "__main__":
     try:
+        # Make sure output directory exists
+        OUTPUT_DIR.mkdir(exist_ok=True)
+        
         # Load Candidate Profile
-        profile_path = BASE_DIR / "candidate_profile.json"
+        profile_path = INPUT_DIR / "candidate_profile.json"
         if not profile_path.exists():
             raise FileNotFoundError(f"Error: Candidate profile file '{profile_path}' not found.")
         
@@ -172,7 +179,7 @@ if __name__ == "__main__":
             candidate_profile = json.load(f)["json_dict"]  # Use the 'json_dict' section
         
         # Load Profile Image
-        profile_image_path = BASE_DIR / "bishwanath.jpg"
+        profile_image_path = INPUT_DIR / "bishwanath.jpg"
         if not profile_image_path.exists():
             logger.warning(f"Profile image not found at '{profile_image_path}'. Resume will be created without an image.")
             profile_image = None

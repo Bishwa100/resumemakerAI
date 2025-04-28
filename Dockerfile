@@ -15,6 +15,23 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Final stage
 FROM python:3.11-slim
 
+# Add metadata
+LABEL maintainer="Your Name <your.email@example.com>"
+LABEL description="ATS-friendly resume maker powered by OpenRouter API"
+LABEL version="1.0"
+
+# Install LaTeX and required system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-latex-extra \
+    latexmk \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Copy virtual environment from builder stage
@@ -24,12 +41,13 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy application code
 COPY src/ ./src/
 
+# Create required directories
+RUN mkdir -p /app/output \
+    /app/src/resumemaker/crews/poem_crew/resume_templates
+
 # Set environment variables
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
-
-# Create output directory
-RUN mkdir -p /app/output
 
 # Run as non-root user
 RUN groupadd -g 1000 appuser && \

@@ -14,7 +14,7 @@ pip install -r requirements.txt
 2. Set up environment variables:
 Create a `.env` file in the root directory with:
 ```
-GEMINI_API_KEY=your_gemini_api_key_here
+OPENROUTER_API_KEY=your_openrouter_api_key_here
 ```
 
 ### Option 2: Using Docker (Recommended)
@@ -51,35 +51,116 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 ## Usage
 
-1. Fill in your details in `crews/poem_crew/candidate_profile.json`
-2. Add the job description in `crews/poem_crew/job_description.json`
-3. (Optional) Add your professional photo as `crews/poem_crew/profile_photo.jpg`
-4. Run the resume maker:
+### Prepare Input Files
 
-   Local:
-   ```bash
-   python -m resumemaker.crews.poem_crew.resume_making_crew
+1. Place your input files in the `input` directory:
+   - `resume.pdf` - Your resume in PDF format
+   - `job_description.txt` - The job description
+
+2. Configure your profile information in `input/config.json`:
+   ```json
+   {
+     "linkedin_url": "https://www.linkedin.com/in/your-profile",
+     "github_url": "your-github-username",
+     "resume_file": "resume.pdf",
+     "job_description_file": "job_description.txt"
+   }
    ```
-   
-   Docker:
-   ```bash
-   docker-compose run resumemaker
-   # Or with Makefile
-   make run
+
+### Command Line Interface
+
+The application now includes a powerful CLI with several useful commands:
+
+#### Windows:
+```powershell
+.\resumemaker.ps1 <command> [options]
+```
+
+#### Linux/MacOS:
+```bash
+./resumemaker.sh <command> [options]
+```
+
+#### Available Commands:
+
+1. **analyze** - Analyze a resume for ATS compatibility
    ```
+   ./resumemaker.sh analyze --resume input/resume.pdf --job input/job_description.txt
+   ```
+
+2. **keywords** - Extract key skills and requirements from a job description
+   ```
+   ./resumemaker.sh keywords --job input/job_description.txt [--resume input/resume.pdf]
+   ```
+
+3. **template** - Manage resume templates
+   ```
+   ./resumemaker.sh template list --type latex
+   ./resumemaker.sh template get --name classic --type latex
+   ```
+
+4. **extract** - Extract structured data from resume and job description
+   ```
+   ./resumemaker.sh extract --resume input/resume.pdf --job input/job_description.txt
+   ```
+
+5. **generate** - Generate an optimized resume (coming soon)
+   ```
+   ./resumemaker.sh generate --resume input/resume.pdf --job input/job_description.txt --template modern
+   ```
+
+### Using Docker:
+
+```bash
+docker-compose up
+# Or with Makefile
+make run
+```
 
 ## Output
 
 The tool will generate output files in the `output` directory:
-- An ATS-optimized LaTeX resume
+- `candidate_profile.json` - Structured profile data with skills, experience, and job matches
+- ATS-optimized LaTeX resume
 - A compiled PDF version of your resume
-- Keyword analysis and optimization suggestions
 
 ## Features
 
 - ATS optimization
 - Keyword analysis
 - Professional LaTeX formatting
-- Profile photo integration (optional)
-- Modern and clean design
-- Multiple resume sections support
+- GitHub project analysis
+- LinkedIn profile integration
+- Job requirements matching
+- Tailored resume generation
+- Powered by OpenRouter API with high-quality AI models
+
+## Advanced Tools
+
+The application includes several specialized tools:
+
+1. **Resume Analyzer Tool** - Assesses ATS compatibility and provides suggestions
+2. **Job Keyword Extractor** - Extracts important skills and requirements from job descriptions
+3. **Template Manager** - Manages different resume templates and formats
+4. **PDF Generator** - Creates professional PDF resumes
+
+## Project Structure
+
+The project is organized in a modular structure with clear separation of concerns. See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for a detailed breakdown of the project structure.
+
+### Key Components
+
+- **AI Crews**: Orchestration of AI agents for complex tasks
+- **AI Tools**: Individual capabilities like search, analysis, and generation
+- **Open Source RAG**: Retrieval-Augmented Generation using HuggingFace models and FAISS
+- **LaTeX Generation**: High-quality resume generation with LaTeX
+
+### Tools Overview
+
+The application uses several tools to accomplish its tasks:
+
+- **OpenSourceRAGTool**: Retrieval-Augmented Generation using HuggingFace embeddings and models
+- **GoogleSearchTool**: Searches Google for relevant information
+- **PDFAnalyzerTool**: Extracts text from PDF resumes
+- **GitHubExtractorTool**: Analyzes GitHub repositories for skills and projects
+- **LinkedInExtractorTool**: Extracts professional details from LinkedIn profiles

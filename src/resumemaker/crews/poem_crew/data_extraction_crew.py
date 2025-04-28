@@ -1,58 +1,88 @@
-import warnings
-warnings.filterwarnings('ignore')
-
 import os
 import yaml
 import logging
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
 from crewai_tools import ScrapeWebsiteTool
 from resumemaker.tools.custom_tool import (
-    PDFAnalyzerTool, MistralRAGTool, GoogleSearchTool, MistralPDFUploadTool
+    PDFAnalyzerTool, GoogleSearchTool
 )
+from resumemaker.tools.opensource_rag_tool import OpenSourceRAGTool
 from resumemaker.tools.githubanalyzer_tool import GitHubFetchTool
 from resumemaker.crews.poem_crew.data_extraction_output import CandidateProfile
+from resumemaker.utils.api_check import check_api_keys
 import json
-import litellm
-litellm._turn_on_debug()
 
 # Setup logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
 
-# Set LLM configuration
-# llm = LLM(
-#     model="ollama/deepseek-r1:8b",
-#     base_url="http://localhost:11435"
-# )
-
-# class CustomLLM(LLM):
-#     def call(self, messages, **kwargs):
-#         # Ensure the last message is a user role
-#         if messages and messages[-1]["role"] == "assistant":
-#             messages.append({"role": "user", "content": "Please proceed with the analysis."})
-#         return super().call(messages, **kwargs)
-
-# llm = CustomLLM(
-#     model="mistral/mistral-large-latest",
-#     temperature=0.7,
-#     api_key= os.getenv('MISTRAL_API_KEY'),
-    
-# )
-
-llm = LLM(
-    model="gemini/gemini-1.5-pro-latest",
-    temperature=0.7,
-    api_key= os.getenv('GEMINI_API_KEY')
-)
-
-
+# Set up paths
 BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[4]  # 4 levels up from this file
+INPUT_DIR = PROJECT_ROOT / "input"
+OUTPUT_DIR = PROJECT_ROOT / "output"
+
+def load_config():
+    """Load configuration from config.json"""
+    config_path = INPUT_DIR / "config.json"
+    try:
+        with open(config_path, 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.warning(f"Config file not found at {config_path}. Using default values.")
+        return {
+            "linkedin_url": "https://www.linkedin.com/in/your-profile",
+            "github_url": "your-github-username",
+            "resume_file": "resume.pdf",
+            "job_description_file": "job_description.txt",
+            "model_settings": {
+                "provider": "openrouter",
+                "model": "meta-llama/llama-4-maverick:free",
+                "temperature": 0.7
+            }
+        }
+    except json.JSONDecodeError:
+        logger.error(f"Error parsing config file at {config_path}. Using default values.")
+        return {
+            "linkedin_url": "https://www.linkedin.com/in/your-profile",
+            "github_url": "your-github-username",
+            "resume_file": "resume.pdf",
+            "job_description_file": "job_description.txt",
+            "model_settings": {
+                "provider": "openrouter",
+                "model": "meta-llama/llama-4-maverick:free",
+                "temperature": 0.7
+            }
+        }
+
+# Check API keys
+if not check_api_keys():
+    logger.error("Missing required API keys. Exiting.")
+    sys.exit(1)
+
+# Load configuration
+config = load_config()
+model_settings = config.get("model_settings", {
+    "provider": "openrouter",
+    "model": "meta-llama/llama-4-maverick:free",
+    "temperature": 0.7
+})
+
+# Set LLM configuration with OpenRouter using settings from config
+llm = LLM(
+    provider=model_settings.get("provider", "openrouter"),
+    model=model_settings.get("model", "meta-llama/llama-4-maverick:free"),
+    temperature=model_settings.get("temperature", 0.7),
+    api_key=os.getenv('OPENROUTER_API_KEY'),
+    api_base="https://openrouter.ai/api/v1"
+)
 
 @CrewBase
 class DataExtraction:
@@ -73,28 +103,19 @@ class DataExtraction:
         with open(file_path, 'r') as file:
             configs[key] = yaml.safe_load(file)
     
-    # @agent
-    # def data_extraction_agent(self) -> Agent:
-    #     return Agent(
-    #         config=self.configs["agents"]["data_extraction_agent"],
-    #         llm=llm,
-    #         verbose=True
-    #     )
     @agent
     def data_extraction_agent(self) -> Agent:
         return Agent(
-            role="CrewAI Data Extraction Specialist",  # Explicit role assignment
+            role="CrewAI Data Extraction Specialist",
             config=self.configs["agents"]["data_extraction_agent"],
             llm=llm,
             verbose=True
         )
-
     
     @agent
     def github_extraction_agent(self) -> Agent:
         """Dedicated agent for GitHub repository analysis"""
         return Agent(
-            
             config=self.configs["agents"]["github_extraction_agent"],
             llm=llm,
             verbose=True
@@ -153,7 +174,6 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["analyze_job_posting"],
             agent=self.job_analysis_agent(),
-            # tools=[MistralRAGTool()]
         )
 
     @task
@@ -161,7 +181,6 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["compare_resume_with_job"],
             agent=self.job_analysis_agent(),
-            # tools=[MistralRAGTool()],
             context=[self.extract_resume_data(), self.analyze_job_posting()]
         )
 
@@ -170,7 +189,7 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["structure_candidate_profile"],
             agent=self.profile_structuring_agent(),
-            tools=[MistralRAGTool()],
+            tools=[OpenSourceRAGTool()],
             context=[
                 self.extract_resume_data(),
                 self.extract_linkedin_data(),
@@ -179,7 +198,7 @@ class DataExtraction:
                 self.analyze_job_posting(),
                 self.compare_resume_with_job()
             ],
-            output_json= CandidateProfile
+            output_json=CandidateProfile
         )
 
     @crew
@@ -206,11 +225,19 @@ class DataExtraction:
 
 if __name__ == "__main__":
     try:
+        # Make sure output directory exists
+        OUTPUT_DIR.mkdir(exist_ok=True)
+        
+        # Load configuration
+        config = load_config()
+        
+        # Initialize tools and crew
         extraction_crew = DataExtraction().crew()
         pdfAnalyzerTool = PDFAnalyzerTool()
 
-        resume_path = BASE_DIR / 'resume.pdf'
-        job_posting_path = BASE_DIR / "abc.txt"
+        # Set file paths
+        resume_path = INPUT_DIR / config["resume_file"]
+        job_posting_path = INPUT_DIR / config["job_description_file"]
 
         # Validate paths
         if not resume_path.exists():
@@ -220,13 +247,17 @@ if __name__ == "__main__":
 
         # Extract data from files
         read_resume = pdfAnalyzerTool._run(resume_path)
-        logger.debug(f"Raw Resume Text: {read_resume}")  # Log raw text for verification
         read_jobPosting = job_posting_path.read_text(encoding="utf-8")
-        logger.debug(f"Raw Job Posting Text: {read_jobPosting}")
 
-        # Replace with your actual LinkedIn and GitHub info
-        linkedin_url = "https://www.linkedin.com/in/bishwanath-jana"  # Example
-        github_url = "Bishwa100"  # Your GitHub username
+        # Get LinkedIn and GitHub info from config
+        linkedin_url = config["linkedin_url"]
+        github_url = config["github_url"]
+        
+        logger.info(f"Starting data extraction with:")
+        logger.info(f"- Resume: {resume_path}")
+        logger.info(f"- Job description: {job_posting_path}")
+        logger.info(f"- LinkedIn: {linkedin_url}")
+        logger.info(f"- GitHub: {github_url}")
         
         # Run the extraction crew
         candidate_profile = extraction_crew.kickoff(
@@ -239,12 +270,13 @@ if __name__ == "__main__":
         )
         
         logger.info("Data extraction completed successfully!")
-        logger.info(f"Candidate Profile: {candidate_profile}")
         
         # Save the extracted profile
-        output_file = BASE_DIR / "candidate_profile.json"
+        output_file = OUTPUT_DIR / "candidate_profile.json"
         with open(output_file, "w") as f:
             json.dump(candidate_profile.dict(), f, indent=2)
+        
+        logger.info(f"Profile saved to {output_file}")
         
     except Exception as e:
         logger.error(f"Error during data extraction: {str(e)}")

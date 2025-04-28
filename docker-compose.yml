@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./output:/app/output
+      - ./input:/app/input
+      - ./src/resumemaker/crews/poem_crew:/app/src/resumemaker/crews/poem_crew
     environment:
       - PYTHONUNBUFFERED=1
     env_file:
@@ -23,6 +25,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    command: ["python", "-m", "resumemaker.crews.poem_crew.data_extraction_crew"]
     # Uncomment the lines below if you need to set API keys
     # env_file:
     #   - .env 

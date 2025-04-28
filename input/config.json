@@ -1,0 +1,11 @@
+{
+  "linkedin_url": "https://www.linkedin.com/in/your-profile",
+  "github_url": "your-github-username",
+  "resume_file": "resume.pdf",
+  "job_description_file": "job_description.txt",
+  "model_settings": {
+    "provider": "openrouter",
+    "model": "anthropic/claude-3-opus",
+    "temperature": 0.7
+  }
+} 

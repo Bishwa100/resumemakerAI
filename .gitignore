@@ -1,8 +1,30 @@
 .env
 __pycache__/
-lib/
-.DS_Store
-.venv
-uv.lock
-abc.txt
-resume.pdf
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Local development
+.env
+.idea/
+.vscode/
+
+# Generated files
+output/
+src/resumemaker/crews/poem_crew/generated_resumes/
+
+# PDF files
+*.pdf
+
+# Media files
+input/*.jpg
+input/*.png
+input/*.jpeg
+
+# Log files
+*.log

@@ -109,6 +109,12 @@ The application now includes a powerful CLI with several useful commands:
    ./resumemaker.sh generate --resume input/resume.pdf --job input/job_description.txt --template modern
    ```
 
+6. **full-pipeline** - Run the complete resume creation pipeline
+   ```
+   ./resumemaker.sh full-pipeline [--config custom_config.json]
+   ```
+   This command integrates both the data extraction crew (which analyzes your resume, job description, LinkedIn, and GitHub) and the resume creation crew (which creates an ATS-optimized LaTeX resume). The entire process is automated and produces a high-quality PDF resume tailored to the job description.
+
 ### Using Docker:
 
 ```bash
@@ -164,3 +170,57 @@ The application uses several tools to accomplish its tasks:
 - **PDFAnalyzerTool**: Extracts text from PDF resumes
 - **GitHubExtractorTool**: Analyzes GitHub repositories for skills and projects
 - **LinkedInExtractorTool**: Extracts professional details from LinkedIn profiles
+
+## LinkedIn Credentials Setup
+
+This application can extract data from LinkedIn profiles. You have two options to provide your LinkedIn credentials:
+
+### Option 1: Using an .env file (Recommended)
+
+1. Create a `.env` file in the project root directory with the following content:
+```
+LINKEDIN_EMAIL=your_linkedin_email@example.com
+LINKEDIN_PASSWORD=your_linkedin_password
+```
+
+2. When using the LinkedIn extractor, set the `use_env` parameter to `True`:
+```python
+from resumemaker.tools.linkedin_extractor_tool import LinkedInExtractorTool
+
+extractor = LinkedInExtractorTool()
+result = extractor._run(
+    profile_url="https://www.linkedin.com/in/username/",
+    use_env=True,
+    screenshot=True
+)
+```
+
+### Option 2: Using a JSON credentials file
+
+1. Create a JSON file with your LinkedIn credentials:
+```json
+{
+    "email": "your_linkedin_email@example.com",
+    "password": "your_linkedin_password"
+}
+```
+
+2. Pass the path to this file when using the LinkedIn extractor:
+```python
+from resumemaker.tools.linkedin_extractor_tool import LinkedInExtractorTool
+
+extractor = LinkedInExtractorTool()
+result = extractor._run(
+    profile_url="https://www.linkedin.com/in/username/",
+    credentials_path="path/to/your/credentials.json",
+    screenshot=True
+)
+```
+
+## Important Notes
+
+- Make sure to add `.env` to your `.gitignore` file to avoid accidentally committing your credentials.
+- The LinkedIn extractor requires `selenium` and `python-dotenv`. Install them with:
+```
+pip install selenium webdriver-manager python-dotenv
+```

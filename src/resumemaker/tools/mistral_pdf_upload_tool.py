@@ -1,12 +1,25 @@
 from typing import Type, Dict, Any
 import os
+import logging
 import requests
 from pydantic import BaseModel, Field
 from crewai.tools import BaseTool
 from dotenv import load_dotenv
-from mistralai import Mistral
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 load_dotenv()
+
+# Try to import Mistral, but provide graceful fallback if not available
+MISTRAL_AVAILABLE = False
+try:
+    from mistralai import Mistral
+    MISTRAL_AVAILABLE = True
+except ImportError:
+    logger.warning("mistralai package not found. MistralPDFUploadTool will be available but non-functional.")
+    logger.warning("Install with: pip install mistralai")
 
 class PDFUploadInput(BaseModel):
     """Input schema for MistralPDFUploadTool."""
@@ -20,6 +33,12 @@ class MistralPDFUploadTool(BaseTool):
 
     def _run(self, file_path: str) -> Dict[str, Any]:
         """Uploads the PDF file to Mistral for OCR processing."""
+        if not MISTRAL_AVAILABLE:
+            return {
+                "error": "mistralai package not installed. Install with: pip install mistralai",
+                "fallback": "Using local PDF processing instead."
+            }
+            
         API_KEY = os.getenv("MISTRAL_API_KEY")
 
         if not API_KEY:

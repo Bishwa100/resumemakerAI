@@ -8,6 +8,7 @@ from typing import Type, Dict, Any, Optional, List
 from pathlib import Path
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +16,7 @@ class LinkedInExtractorInput(BaseModel):
     """Input schema for LinkedInExtractorTool."""
     profile_url: str = Field(..., description="LinkedIn profile URL to extract data from")
     credentials_path: str = Field(None, description="Path to credentials JSON file with LinkedIn login info")
+    use_env: bool = Field(False, description="Whether to use environment variables for LinkedIn credentials")
     screenshot: bool = Field(False, description="Whether to take a screenshot of the profile")
     output_path: str = Field(None, description="Path to save extracted data and screenshots")
     headless: bool = Field(True, description="Whether to run browser in headless mode")
@@ -30,8 +32,8 @@ class LinkedInExtractorTool(BaseTool):
         self._is_logged_in = False
         
     def _run(self, profile_url: str, credentials_path: Optional[str] = None, 
-             screenshot: bool = False, output_path: Optional[str] = None,
-             headless: bool = True) -> Dict[str, Any]:
+             use_env: bool = False, screenshot: bool = False, 
+             output_path: Optional[str] = None, headless: bool = True) -> Dict[str, Any]:
         """
         Extract data from a LinkedIn profile
         """
@@ -76,8 +78,11 @@ class LinkedInExtractorTool(BaseTool):
                 self._driver = webdriver.Chrome(service=service, options=chrome_options)
             
             # Login to LinkedIn if credentials are provided and not already logged in
-            if credentials_path and not self._is_logged_in:
-                self._login_to_linkedin(credentials_path)
+            if not self._is_logged_in:
+                if use_env:
+                    self._login_with_env()
+                elif credentials_path:
+                    self._login_with_json(credentials_path)
             
             # Navigate to the profile
             logger.info(f"Navigating to LinkedIn profile: {profile_url}")
@@ -131,7 +136,26 @@ class LinkedInExtractorTool(BaseTool):
                 self._driver = None
                 self._is_logged_in = False
     
-    def _login_to_linkedin(self, credentials_path: str) -> None:
+    def _login_with_env(self) -> None:
+        """Login to LinkedIn with credentials from environment variables"""
+        try:
+            # Load environment variables
+            load_dotenv()
+            
+            email = os.environ.get('LINKEDIN_EMAIL')
+            password = os.environ.get('LINKEDIN_PASSWORD')
+            
+            if not email or not password:
+                logger.error("LinkedIn credentials not found in environment variables. Set LINKEDIN_EMAIL and LINKEDIN_PASSWORD.")
+                return
+            
+            self._perform_login(email, password)
+            
+        except Exception as e:
+            logger.error(f"Failed to login to LinkedIn with environment variables: {str(e)}")
+            self._is_logged_in = False
+    
+    def _login_with_json(self, credentials_path: str) -> None:
         """Login to LinkedIn with credentials from a JSON file"""
         try:
             # Load credentials
@@ -145,32 +169,36 @@ class LinkedInExtractorTool(BaseTool):
                 logger.error("Invalid credentials file format. Needs 'email' and 'password' fields.")
                 return
             
-            # Navigate to LinkedIn login page
-            self._driver.get("https://www.linkedin.com/login")
-            
-            # Wait for the login form to load
-            WebDriverWait(self._driver, 10).until(
-                EC.presence_of_element_located((By.ID, "username"))
-            )
-            
-            # Enter email and password
-            self._driver.find_element(By.ID, "username").send_keys(email)
-            self._driver.find_element(By.ID, "password").send_keys(password)
-            
-            # Click login button
-            self._driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-            
-            # Wait for login to complete
-            WebDriverWait(self._driver, 10).until(
-                EC.presence_of_element_located((By.ID, "global-nav"))
-            )
-            
-            self._is_logged_in = True
-            logger.info("Successfully logged in to LinkedIn")
+            self._perform_login(email, password)
             
         except Exception as e:
             logger.error(f"Failed to login to LinkedIn: {str(e)}")
             self._is_logged_in = False
+    
+    def _perform_login(self, email: str, password: str) -> None:
+        """Perform the LinkedIn login with provided credentials"""
+        # Navigate to LinkedIn login page
+        self._driver.get("https://www.linkedin.com/login")
+        
+        # Wait for the login form to load
+        WebDriverWait(self._driver, 10).until(
+            EC.presence_of_element_located((By.ID, "username"))
+        )
+        
+        # Enter email and password
+        self._driver.find_element(By.ID, "username").send_keys(email)
+        self._driver.find_element(By.ID, "password").send_keys(password)
+        
+        # Click login button
+        self._driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
+        
+        # Wait for login to complete
+        WebDriverWait(self._driver, 10).until(
+            EC.presence_of_element_located((By.ID, "global-nav"))
+        )
+        
+        self._is_logged_in = True
+        logger.info("Successfully logged in to LinkedIn")
     
     def _scroll_page(self) -> None:
         """Scroll the page to load all dynamic content"""

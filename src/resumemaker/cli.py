@@ -20,6 +20,7 @@ from resumemaker.tools.template_manager_tool import TemplateManagerTool
 from resumemaker.tools.job_keyword_extractor_tool import JobKeywordExtractorTool
 from resumemaker.crews.poem_crew.data_extraction_crew import DataExtraction
 from resumemaker.utils.api_check import check_api_keys
+from resumemaker.main import complete_resume_pipeline
 
 def parse_args():
     """Parse command line arguments"""
@@ -63,6 +64,10 @@ def parse_args():
     extract_parser.add_argument("--linkedin", "-l", help="LinkedIn profile URL")
     extract_parser.add_argument("--github", "-g", help="GitHub username")
     extract_parser.add_argument("--output", "-o", help="Output JSON file (default: ./output/candidate_profile.json)")
+    
+    # Full pipeline command (new)
+    pipeline_parser = subparsers.add_parser("full-pipeline", help="Run the complete resume creation pipeline")
+    pipeline_parser.add_argument("--config", "-c", help="Custom config file path (optional)")
     
     return parser.parse_args()
 
@@ -331,6 +336,54 @@ def generate_resume(args):
     print("Resume generation coming soon!")
     return 0
 
+def run_full_pipeline(args):
+    """Run the complete end-to-end pipeline for resume creation"""
+    try:
+        # If a custom config file is provided, temporarily replace the default one
+        config_backup = None
+        if args.config:
+            config_path = Path(args.config)
+            if not config_path.exists():
+                logger.error(f"Config file not found: {args.config}")
+                return 1
+                
+            input_dir = Path(__file__).resolve().parents[3] / "input"
+            default_config = input_dir / "config.json"
+            
+            if default_config.exists():
+                # Backup the existing config
+                with open(default_config, 'r') as f:
+                    config_backup = f.read()
+                    
+            # Replace with custom config
+            with open(config_path, 'r') as src, open(default_config, 'w') as dst:
+                dst.write(src.read())
+            
+            logger.info(f"Using custom config from {args.config}")
+        
+        logger.info("Starting complete resume creation pipeline...")
+        
+        # Run the integrated pipeline
+        success = complete_resume_pipeline()
+        
+        # Restore the original config if needed
+        if config_backup is not None:
+            input_dir = Path(__file__).resolve().parents[3] / "input"
+            default_config = input_dir / "config.json"
+            with open(default_config, 'w') as f:
+                f.write(config_backup)
+        
+        if success:
+            logger.info("✅ Resume creation pipeline completed successfully!")
+            return 0
+        else:
+            logger.error("❌ Resume creation pipeline failed.")
+            return 1
+            
+    except Exception as e:
+        logger.error(f"Error running resume creation pipeline: {str(e)}")
+        return 1
+
 def main():
     """Main entry point for the CLI"""
     args = parse_args()
@@ -345,6 +398,8 @@ def main():
         return generate_resume(args)
     elif args.command == "keywords":
         return extract_keywords(args)
+    elif args.command == "full-pipeline":
+        return run_full_pipeline(args)
     else:
         logger.error(f"Unknown command: {args.command}")
         return 1

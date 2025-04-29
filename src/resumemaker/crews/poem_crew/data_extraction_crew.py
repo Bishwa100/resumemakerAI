@@ -6,12 +6,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import ScrapeWebsiteTool
-from resumemaker.tools.custom_tool import (
-    PDFAnalyzerTool, GoogleSearchTool
-)
+from resumemaker.tools.custom_tool import PDFAnalyzerTool
 from resumemaker.tools.opensource_rag_tool import OpenSourceRAGTool
 from resumemaker.tools.githubanalyzer_tool import GitHubFetchTool
+from resumemaker.tools.linkedin_extractor_tool import LinkedInExtractorTool
 from resumemaker.crews.poem_crew.data_extraction_output import CandidateProfile
 from resumemaker.utils.api_check import check_api_keys
 import json
@@ -149,7 +147,7 @@ class DataExtraction:
         return Task(
             config=self.configs["tasks"]["extract_linkedin_data"],
             agent=self.data_extraction_agent(),
-            tools=[GoogleSearchTool(), ScrapeWebsiteTool()]
+            tools=[LinkedInExtractorTool()]
         )
 
     @task

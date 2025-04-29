@@ -1,11 +1,11 @@
 {
   "linkedin_url": "https://www.linkedin.com/in/your-profile",
-  "github_url": "your-github-username",
+  "github_url": "https://github.com/Bishwa100",
   "resume_file": "resume.pdf",
   "job_description_file": "job_description.txt",
   "model_settings": {
     "provider": "openrouter",
-    "model": "anthropic/claude-3-opus",
+    "model": "meta-llama/llama-4-maverick:free",
     "temperature": 0.7
   }
 } 
